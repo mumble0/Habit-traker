@@ -11,13 +11,16 @@ public class AppDbContext : DbContext
 	}
 
 	public DbSet<User> Users => Set<User>();
-	protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<Habit> Habits => Set<Habit>();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
-		modelBuilder.Entity<User>().HasData(
-			new User { Id = 1, Name = "Олена", Email = "olena@example.com" },
-			new User { Id = 2, Name = "Іван", Email = "ivan@example.com" }
-		);
-	}
+		modelBuilder.Entity<User>()
+			.HasMany(u => u.Habits)
+			.WithOne(h => h.User)
+			.HasForeignKey(h => h.UserId)
+			.OnDelete(DeleteBehavior.Cascade);
+
+    }
 
 }
 

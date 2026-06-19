@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using backend.Data;
+using backend.DTOs;
 using backend.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -42,9 +43,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Твої слейні звички :(",
+        Title = "Твої слейні звички ",
         Version = "v1",
-        Description = "Документація REST API навчального MVP-проєкту."
+        Description = "Тут ти записуєшь свої слейні звички, щоб не забути виканати всі"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -89,12 +90,7 @@ app.MapPost("/auth/login", async (LoginDto dto, AppDbContext db, IConfiguration 
     return Results.Ok(new { access_token = token, token_type = "Bearer" });
 })
     .WithTags("Auth");
-
-
-
 app.MapGet("/", () => "MVP Back-End SQLite!");
-
-
 
 app.MapGet("/users/{id}", async (int id, AppDbContext db) =>
     await db.Users.FindAsync(id) is User user
@@ -162,6 +158,91 @@ app.MapPost("/auth/register", async (RegisterDto dto, AppDbContext db) =>
         new { user.Id, user.Name, user.Email, user.Role });
 })
     .WithTags("Auth");
+
+
+// NENNENENNENENENNENENNENENENE
+
+app.MapGet("/habits", async (ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habits = await db.Habits.Where(h => h.UserId == userId).ToListAsync();
+    return Results.Ok(habits);
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+
+app.MapGet("/habits/{id}", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habit = await db.Habits.FindAsync(id);
+    if (habit is null || habit.UserId != userId) return Results.NotFound();
+    return Results.Ok(habit);
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+
+app.MapPost("/habits", async (HabitDto dto, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habit = new Habit
+    {
+        NameHabit = dto.NameHabit,
+        Description = dto.Description,
+        StartDate = dto.StartDate,
+        IsCompleted = false,
+        UserId = userId
+    };
+    db.Habits.Add(habit);
+    await db.SaveChangesAsync();
+    return Results.Created($"/habits/{habit.Id}", habit);
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+
+app.MapPut("/habits/{id}", async (int id, HabitDto dto, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habit = await db.Habits.FindAsync(id);
+    if (habit is null || habit.UserId != userId) return Results.NotFound();
+
+    habit.NameHabit = dto.NameHabit;
+    habit.Description = dto.Description;
+    habit.StartDate = dto.StartDate;
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+
+app.MapPatch("/habits/{id}/complete", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habit = await db.Habits.FindAsync(id);
+    if (habit is null || habit.UserId != userId) return Results.NotFound();
+
+    habit.IsCompleted = !habit.IsCompleted;
+    await db.SaveChangesAsync();
+    return Results.Ok(habit);
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+
+app.MapDelete("/habits/{id}", async (int id, ClaimsPrincipal principal, AppDbContext db) =>
+{
+    var userId = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    var habit = await db.Habits.FindAsync(id);
+    if (habit is null || habit.UserId != userId) return Results.NotFound();
+
+    db.Habits.Remove(habit);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+})
+    .RequireAuthorization()
+    .WithTags("Habits");
+// NENENENNENENNENE
+
+
+
 
 app.Run();
 
