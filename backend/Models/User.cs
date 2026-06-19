@@ -1,3 +1,5 @@
+using System.Data;
+
 namespace backend.Models;
 
 public class User
@@ -7,4 +9,8 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string Role { get; set; } = "user";
+
+    public DateTime  CreateAt { get; set }
+
+    public List<Habit> Habits { get; set }
 }
