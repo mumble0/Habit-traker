@@ -42,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "MVP Back-End API",
+        Title = "Твої слейні звички :(",
         Version = "v1",
         Description = "Документація REST API навчального MVP-проєкту."
     });

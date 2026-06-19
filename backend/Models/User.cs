@@ -10,7 +10,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string Role { get; set; } = "user";
 
-    public DateTime  CreateAt { get; set }
+    public DateTime  CreateAt { get; set; } = DateTime.UtcNow;
 
-    public List<Habit> Habits { get; set }
+    public List<Habit> Habits { get; set; } = new();
 }
